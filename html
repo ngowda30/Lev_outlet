@@ -3,29 +3,39 @@
 <head>
     <title>Outlet Search Dashboard</title>
 
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <style>
         body {
             font-family: Arial;
             background: #f5f6fa;
             text-align: center;
+            margin: 0;
         }
 
         h2 {
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
         input {
             padding: 12px;
-            width: 350px;
+            width: 90%;
+            max-width: 400px;
             border-radius: 8px;
             border: 1px solid #ccc;
             font-size: 16px;
         }
 
+        #status {
+            margin: 10px;
+            font-size: 14px;
+            color: gray;
+        }
+
         table {
-            margin-top: 20px;
+            margin-top: 10px;
             border-collapse: collapse;
-            width: 90%;
+            width: 95%;
             margin-left: auto;
             margin-right: auto;
             background: white;
@@ -33,23 +43,30 @@
         }
 
         th {
-            background: #2f3640;
+            background: #273c75;
             color: white;
         }
 
         th, td {
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ddd;
+            font-size: 14px;
         }
 
         tr:hover {
             background-color: #f1f2f6;
         }
 
-        #status {
+        button {
             margin-top: 10px;
-            color: gray;
+            padding: 8px 15px;
+            border: none;
+            background: #44bd32;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
         }
+
     </style>
 </head>
 
@@ -57,65 +74,74 @@
 
 <h2>🔍 Outlet Search Dashboard</h2>
 
-<input
-    type="text"
-    id="searchInput"
-    placeholder="Type Outlet ID or Name..."
+<input 
+    type="text" 
+    id="searchInput" 
+    placeholder="Search Outlet ID / Name..."
     onkeyup="searchData()"
 />
 
-<div id="status">Loading data...</div>
+<br>
+<button onclick="loadData()">🔄 Refresh</button>
 
-<table id="resultTable">
+<div id="status">Loading...</div>
+
+<table>
     <thead id="tableHead"></thead>
     <tbody id="tableBody"></tbody>
 </table>
 
 <script>
 
-// ✅ YOUR LIVE GOOGLE SHEET API
+// ✅ YOUR LIVE API
 const API_URL = "https://opensheet.elk.sh/17qYYhekFBD-KIoUTMPlXLm7sXXaXHcsYQK1v2R-FqV4/1";
 
 let sheetData = [];
 
-// 🔄 Load data once
+// 🚀 Load Data
 async function loadData() {
+    document.getElementById("status").innerText = "Loading latest data...";
+
     try {
         const res = await fetch(API_URL);
         sheetData = await res.json();
 
+        if (!sheetData.length) {
+            document.getElementById("status").innerText = "No data found ❌";
+            return;
+        }
+
         document.getElementById("status").innerText = "Data Loaded ✅";
 
-        createTableHeader();
+        createHeader();
         displayData(sheetData);
 
-    } catch (error) {
+    } catch (err) {
         document.getElementById("status").innerText = "Error loading data ❌";
-        console.error(error);
+        console.error(err);
     }
 }
 
-// 📊 Create dynamic table headers
-function createTableHeader() {
+// 📊 Create Table Header
+function createHeader() {
     const headers = Object.keys(sheetData[0]);
-    let headerHTML = "<tr>";
+    let html = "<tr>";
 
     headers.forEach(h => {
-        headerHTML += `<th>${h}</th>`;
+        html += `<th>${h}</th>`;
     });
 
-    headerHTML += "</tr>";
-
-    document.getElementById("tableHead").innerHTML = headerHTML;
+    html += "</tr>";
+    document.getElementById("tableHead").innerHTML = html;
 }
 
-// 📊 Display data in table
+// 📊 Display Data
 function displayData(data) {
     const body = document.getElementById("tableBody");
     body.innerHTML = "";
 
     if (data.length === 0) {
-        body.innerHTML = "<tr><td colspan='100%'>No Data Found</td></tr>";
+        body.innerHTML = "<tr><td colspan='100%'>No Results</td></tr>";
         return;
     }
 
@@ -131,7 +157,7 @@ function displayData(data) {
     });
 }
 
-// 🔍 Search function (auto)
+// 🔍 Search
 function searchData() {
     const input = document.getElementById("searchInput").value.toLowerCase();
 
@@ -144,7 +170,10 @@ function searchData() {
     displayData(filtered);
 }
 
-// 🚀 Load on start
+// 🔄 Auto refresh every 30 sec
+setInterval(loadData, 30000);
+
+// Load first time
 loadData();
 
 </script>
