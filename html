@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Outlet Search Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f5f6fa;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 30px;
+        }
+
+        input {
+            padding: 12px;
+            width: 350px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+            background: white;
+            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #2f3640;
+            color: white;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background-color: #f1f2f6;
+        }
+
+        #status {
+            margin-top: 10px;
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>🔍 Outlet Search Dashboard</h2>
+
+<input
+    type="text"
+    id="searchInput"
+    placeholder="Type Outlet ID or Name..."
+    onkeyup="searchData()"
+/>
+
+<div id="status">Loading data...</div>
+
+<table id="resultTable">
+    <thead id="tableHead"></thead>
+    <tbody id="tableBody"></tbody>
+</table>
+
+<script>
+
+// ✅ YOUR LIVE GOOGLE SHEET API
+const API_URL = "https://opensheet.elk.sh/17qYYhekFBD-KIoUTMPlXLm7sXXaXHcsYQK1v2R-FqV4/1";
+
+let sheetData = [];
+
+// 🔄 Load data once
+async function loadData() {
+    try {
+        const res = await fetch(API_URL);
+        sheetData = await res.json();
+
+        document.getElementById("status").innerText = "Data Loaded ✅";
+
+        createTableHeader();
+        displayData(sheetData);
+
+    } catch (error) {
+        document.getElementById("status").innerText = "Error loading data ❌";
+        console.error(error);
+    }
+}
+
+// 📊 Create dynamic table headers
+function createTableHeader() {
+    const headers = Object.keys(sheetData[0]);
+    let headerHTML = "<tr>";
+
+    headers.forEach(h => {
+        headerHTML += `<th>${h}</th>`;
+    });
+
+    headerHTML += "</tr>";
+
+    document.getElementById("tableHead").innerHTML = headerHTML;
+}
+
+// 📊 Display data in table
+function displayData(data) {
+    const body = document.getElementById("tableBody");
+    body.innerHTML = "";
+
+    if (data.length === 0) {
+        body.innerHTML = "<tr><td colspan='100%'>No Data Found</td></tr>";
+        return;
+    }
+
+    data.forEach(row => {
+        let rowHTML = "<tr>";
+
+        Object.values(row).forEach(val => {
+            rowHTML += `<td>${val || ""}</td>`;
+        });
+
+        rowHTML += "</tr>";
+        body.innerHTML += rowHTML;
+    });
+}
+
+// 🔍 Search function (auto)
+function searchData() {
+    const input = document.getElementById("searchInput").value.toLowerCase();
+
+    const filtered = sheetData.filter(row =>
+        Object.values(row).some(val =>
+            String(val).toLowerCase().includes(input)
+        )
+    );
+
+    displayData(filtered);
+}
+
+// 🚀 Load on start
+loadData();
+
+</script>
+
+</body>
+</html>
