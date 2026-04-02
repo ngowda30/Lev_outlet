@@ -2,181 +2,261 @@
 <html>
 <head>
     <title>Outlet Search Dashboard</title>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <meta name="viewport" content="width=1280">
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: Arial;
-            background: #f5f6fa;
-            text-align: center;
-            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+            min-width: 1280px;
         }
 
-        h2 {
-            margin-top: 20px;
+        /* ── HEADER BOX ── */
+        .header-box {
+            margin: 18px 30px 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            background: #fff;
         }
 
-        input {
-            padding: 12px;
-            width: 90%;
-            max-width: 400px;
+        .header-box img.levista-logo {
+            height: 55px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .header-box img.sln-logo {
+            height: 70px;
+            object-fit: contain;
             border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
+            display: block;
         }
 
-        #status {
-            margin: 10px;
+        /* ── SEARCH BAR ── */
+        .search-section {
+            margin: 20px 30px 8px 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-section input {
+            padding: 10px 15px;
+            width: 360px;
+            border-radius: 5px;
+            border: 1.5px solid #b0bec5;
             font-size: 14px;
-            color: gray;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        table {
-            margin-top: 10px;
-            border-collapse: collapse;
-            width: 95%;
-            margin-left: auto;
-            margin-right: auto;
-            background: white;
-            box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+        .search-section input:focus {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.1);
         }
 
-        th {
-            background: #273c75;
-            color: white;
-        }
-
-        th, td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            font-size: 14px;
-        }
-
-        tr:hover {
-            background-color: #f1f2f6;
-        }
-
-        button {
-            margin-top: 10px;
-            padding: 8px 15px;
+        .search-section button {
+            padding: 10px 24px;
+            background: #2e7d32;
+            color: #fff;
             border: none;
-            background: #44bd32;
-            color: white;
-            border-radius: 6px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
         }
 
+        .search-section button:hover { background: #1b5e20; }
+
+        #status {
+            font-size: 12px;
+            color: #888;
+            margin: 0 30px 2px 30px;
+        }
+
+        #resultInfo {
+            font-size: 12px;
+            color: #444;
+            margin: 0 30px 6px 30px;
+        }
+
+        /* ── TABLE (hidden until search) ── */
+        .table-wrapper {
+            display: none;
+            margin: 0 30px 40px 30px;
+            overflow-x: auto;
+            border: 1.5px solid #a5d6a7;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: #fff;
+            font-size: 12.5px;
+        }
+
+        thead tr th {
+            background: #2e7d32;
+            color: #fff;
+            padding: 9px 11px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 11.5px;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            border: 1px solid #1b5e20;
+        }
+
+        tbody tr td {
+            padding: 8px 11px;
+            border: 1px solid #e0e0e0;
+            color: #222;
+            white-space: nowrap;
+        }
+
+        tbody tr:nth-child(even) { background: #f9fbe7; }
+        tbody tr:hover { background: #e8f5e9; }
+
+        .no-data {
+            text-align: center;
+            padding: 28px;
+            color: #999;
+            font-size: 13px;
+        }
     </style>
 </head>
-
 <body>
 
-<h2>🔍 Outlet Search Dashboard</h2>
+<!-- HEADER BOX -->
+<div class="header-box">
+    <img class="levista-logo" src="levista.jpg" alt="Levista">
+    <img class="sln-logo" src="logo-sln.webp" alt="SLN">
+</div>
 
-<input 
-    type="text" 
-    id="searchInput" 
-    placeholder="Search Outlet ID / Name..."
-    onkeyup="searchData()"
-/>
+<!-- SEARCH -->
+<div class="search-section">
+    <input type="text" id="searchInput"
+           placeholder="Type Outlet ID or Name..."
+           onkeyup="handleKey(event)">
+    <button onclick="triggerSearch()">Search</button>
+</div>
 
-<br>
-<button onclick="loadData()">🔄 Refresh</button>
+<div id="status"></div>
+<div id="resultInfo"></div>
 
-<div id="status">Loading...</div>
-
-<table>
-    <thead id="tableHead"></thead>
-    <tbody id="tableBody"></tbody>
-</table>
+<!-- TABLE -->
+<div class="table-wrapper" id="tableWrapper">
+    <table>
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
 
 <script>
+    const API_URL = "https://opensheet.elk.sh/17qYYhekFBD-KIoUTMPlXLm7sXXaXHcsYQK1v2R-FqV4/1";
 
-// ✅ YOUR LIVE API
-const API_URL = "https://opensheet.elk.sh/17qYYhekFBD-KIoUTMPlXLm7sXXaXHcsYQK1v2R-FqV4/1";
+    const PREFERRED_COLS = [
+        "OUTLET ID","OUTLET NAME","ZONE","RSM","ASM","SO",
+        "BASE POINTS","FOCUS POINTS","GROWTH POINTS 1",
+        "GROWTH POINTS 2","GROWTH POINTS 3","TOTAL POINTS"
+    ];
 
-let sheetData = [];
+    let sheetData = [];
+    let orderedHeaders = [];
 
-// 🚀 Load Data
-async function loadData() {
-    document.getElementById("status").innerText = "Loading latest data...";
+    async function loadData() {
+        try {
+            const res = await fetch(API_URL);
+            sheetData = await res.json();
 
-    try {
-        const res = await fetch(API_URL);
-        sheetData = await res.json();
+            const sheetKeys = Object.keys(sheetData[0]);
+            const upperMap = {};
+            sheetKeys.forEach(k => upperMap[k.trim().toUpperCase()] = k);
 
-        if (!sheetData.length) {
-            document.getElementById("status").innerText = "No data found ❌";
+            orderedHeaders = [];
+            PREFERRED_COLS.forEach(col => {
+                if (upperMap[col]) orderedHeaders.push(upperMap[col]);
+            });
+            sheetKeys.forEach(k => {
+                if (!orderedHeaders.includes(k)) orderedHeaders.push(k);
+            });
+
+            buildHeader();
+            document.getElementById("status").innerText =
+                sheetData.length + " records loaded. Search to view data.";
+        } catch (e) {
+            document.getElementById("status").innerText = "Error loading data.";
+            console.error(e);
+        }
+    }
+
+    function buildHeader() {
+        const tr = document.createElement("tr");
+        orderedHeaders.forEach(h => {
+            const th = document.createElement("th");
+            th.textContent = h.trim().toUpperCase();
+            tr.appendChild(th);
+        });
+        document.getElementById("tableHead").innerHTML = "";
+        document.getElementById("tableHead").appendChild(tr);
+    }
+
+    function displayData(data) {
+        const body = document.getElementById("tableBody");
+        body.innerHTML = "";
+
+        if (!data.length) {
+            body.innerHTML = `<tr><td colspan="${orderedHeaders.length}" class="no-data">No records found.</td></tr>`;
             return;
         }
 
-        document.getElementById("status").innerText = "Data Loaded ✅";
-
-        createHeader();
-        displayData(sheetData);
-
-    } catch (err) {
-        document.getElementById("status").innerText = "Error loading data ❌";
-        console.error(err);
-    }
-}
-
-// 📊 Create Table Header
-function createHeader() {
-    const headers = Object.keys(sheetData[0]);
-    let html = "<tr>";
-
-    headers.forEach(h => {
-        html += `<th>${h}</th>`;
-    });
-
-    html += "</tr>";
-    document.getElementById("tableHead").innerHTML = html;
-}
-
-// 📊 Display Data
-function displayData(data) {
-    const body = document.getElementById("tableBody");
-    body.innerHTML = "";
-
-    if (data.length === 0) {
-        body.innerHTML = "<tr><td colspan='100%'>No Results</td></tr>";
-        return;
-    }
-
-    data.forEach(row => {
-        let rowHTML = "<tr>";
-
-        Object.values(row).forEach(val => {
-            rowHTML += `<td>${val || ""}</td>`;
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            orderedHeaders.forEach(h => {
+                const td = document.createElement("td");
+                td.textContent = row[h] !== undefined ? row[h] : "";
+                tr.appendChild(td);
+            });
+            body.appendChild(tr);
         });
+    }
 
-        rowHTML += "</tr>";
-        body.innerHTML += rowHTML;
-    });
-}
+    function triggerSearch() {
+        const query = document.getElementById("searchInput").value.trim().toLowerCase();
 
-// 🔍 Search
-function searchData() {
-    const input = document.getElementById("searchInput").value.toLowerCase();
+        if (!query) {
+            document.getElementById("tableWrapper").style.display = "none";
+            document.getElementById("resultInfo").innerText = "";
+            return;
+        }
 
-    const filtered = sheetData.filter(row =>
-        Object.values(row).some(val =>
-            String(val).toLowerCase().includes(input)
-        )
-    );
+        const filtered = sheetData.filter(row =>
+            Object.values(row).some(v => String(v).toLowerCase().includes(query))
+        );
 
-    displayData(filtered);
-}
+        document.getElementById("tableWrapper").style.display = "block";
+        document.getElementById("resultInfo").innerText =
+            "Showing " + filtered.length + " of " + sheetData.length + " records for \"" + query + "\"";
 
-// 🔄 Auto refresh every 30 sec
-setInterval(loadData, 30000);
+        displayData(filtered);
+    }
 
-// Load first time
-loadData();
+    function handleKey(e) {
+        if (e.key === "Enter") {
+            triggerSearch();
+            return;
+        }
+        if (document.getElementById("searchInput").value.trim() === "") {
+            document.getElementById("tableWrapper").style.display = "none";
+            document.getElementById("resultInfo").innerText = "";
+        }
+    }
 
+    loadData();
 </script>
-
 </body>
 </html>
