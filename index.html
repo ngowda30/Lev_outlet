@@ -142,7 +142,7 @@
             font-size: 12.5px;
         }
 
-        /* Light blue header — matches screenshot */
+        /* Light blue header */
         thead tr th {
             background: #b8cce4;
             color: #1a1a2e;
@@ -156,13 +156,11 @@
             vertical-align: top;
         }
 
-        /* Column label text */
         thead tr th .col-label {
             display: block;
             margin-bottom: 4px;
         }
 
-        /* Dropdown inside header cell */
         thead tr th select.col-filter {
             width: 100%;
             padding: 3px 5px;
@@ -277,11 +275,22 @@
             buildHeader();
 
             document.getElementById("status").innerText =
-                sheetData.length + " records loaded. Search to view data.";
+                sheetData.length + " records loaded.";
+
+            showTop50();
+
         } catch (e) {
             document.getElementById("status").innerText = "Error loading data.";
             console.error(e);
         }
+    }
+
+    function showTop50() {
+        const top50 = sheetData.slice(0, 50);
+        document.getElementById("tableWrapper").style.display = "block";
+        document.getElementById("resultInfo").innerText =
+            "Showing top 50 of " + sheetData.length + " records";
+        displayData(top50);
     }
 
     function buildHeader() {
@@ -327,11 +336,12 @@
 
     function applyFilters() {
         const query = document.getElementById("searchInput").value.trim().toLowerCase();
-        if (!query) return;
 
-        let base = sheetData.filter(row =>
-            Object.values(row).some(v => String(v).toLowerCase().includes(query))
-        );
+        let base = query
+            ? sheetData.filter(row =>
+                Object.values(row).some(v => String(v).toLowerCase().includes(query))
+              )
+            : sheetData.slice(0, 50);
 
         orderedHeaders.forEach(h => {
             const fv = columnFilters[h];
@@ -371,8 +381,7 @@
 
         if (!query) {
             box.style.display = "none";
-            document.getElementById("tableWrapper").style.display = "none";
-            document.getElementById("resultInfo").innerText = "";
+            showTop50();
             return;
         }
 
@@ -419,8 +428,7 @@
         const query = document.getElementById("searchInput").value.trim().toLowerCase();
 
         if (!query) {
-            document.getElementById("tableWrapper").style.display = "none";
-            document.getElementById("resultInfo").innerText = "";
+            showTop50();
             return;
         }
 
@@ -442,8 +450,7 @@
         if (e.key === "Enter")  { triggerSearch(); return; }
         if (e.key === "Escape") { document.getElementById("suggestions").style.display = "none"; }
         if (document.getElementById("searchInput").value.trim() === "") {
-            document.getElementById("tableWrapper").style.display = "none";
-            document.getElementById("resultInfo").innerText = "";
+            showTop50();
         }
     }
 
