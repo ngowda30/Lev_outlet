@@ -2,19 +2,17 @@
 <html>
 <head>
     <title>Outlet Search Dashboard</title>
-    <meta name="viewport" content="width=1280">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: Arial, sans-serif;
             background: #ffffff;
-            min-width: 1280px;
         }
 
-        /* ── HEADER BOX ── */
+        /* ── HEADER ── */
         .header-box {
-            margin: 18px 30px 0 30px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -23,29 +21,37 @@
         }
 
         .header-box img.levista-logo {
-            height: 55px;
+            height: 75px;
             object-fit: contain;
             display: block;
         }
 
         .header-box img.sln-logo {
-            height: 70px;
+            height: 85px;
             object-fit: contain;
-            border-radius: 8px;
+            border-radius: 10px;
             display: block;
         }
 
-        /* ── SEARCH BAR ── */
+        /* ── SEARCH ── */
         .search-section {
-            margin: 20px 30px 8px 30px;
+            margin: 16px 18px 8px 18px;
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
-        .search-section input {
-            padding: 10px 15px;
-            width: 360px;
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+            min-width: 200px;
+        }
+
+        .search-wrapper input {
+            padding: 10px 14px;
+            width: 100%;
             border-radius: 5px;
             border: 1.5px solid #b0bec5;
             font-size: 14px;
@@ -53,9 +59,44 @@
             transition: border-color 0.2s;
         }
 
-        .search-section input:focus {
+        .search-wrapper input:focus {
             border-color: #2e7d32;
             box-shadow: 0 0 0 3px rgba(46,125,50,0.1);
+        }
+
+        #suggestions {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border: 1.5px solid #2e7d32;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        #suggestions div {
+            padding: 9px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #222;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        #suggestions div:hover {
+            background: #e8f5e9;
+            color: #1b5e20;
+            font-weight: 600;
+        }
+
+        #suggestions div span.match {
+            font-weight: 700;
+            color: #2e7d32;
         }
 
         .search-section button {
@@ -67,6 +108,7 @@
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         .search-section button:hover { background: #1b5e20; }
@@ -74,22 +116,23 @@
         #status {
             font-size: 12px;
             color: #888;
-            margin: 0 30px 2px 30px;
+            margin: 0 18px 2px 18px;
         }
 
         #resultInfo {
             font-size: 12px;
             color: #444;
-            margin: 0 30px 6px 30px;
+            margin: 0 18px 6px 18px;
         }
 
-        /* ── TABLE (hidden until search) ── */
+        /* ── TABLE ── */
         .table-wrapper {
             display: none;
-            margin: 0 30px 40px 30px;
+            margin: 0 18px 40px 18px;
             overflow-x: auto;
-            border: 1.5px solid #a5d6a7;
+            border: 1.5px solid #9db8d9;
             border-radius: 4px;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
@@ -99,16 +142,42 @@
             font-size: 12.5px;
         }
 
+        /* Light blue header — matches screenshot */
         thead tr th {
-            background: #2e7d32;
-            color: #fff;
-            padding: 9px 11px;
+            background: #b8cce4;
+            color: #1a1a2e;
+            padding: 8px 11px;
             text-align: left;
             font-weight: 700;
             font-size: 11.5px;
             letter-spacing: 0.3px;
             white-space: nowrap;
-            border: 1px solid #1b5e20;
+            border: 1px solid #9db8d9;
+            vertical-align: top;
+        }
+
+        /* Column label text */
+        thead tr th .col-label {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Dropdown inside header cell */
+        thead tr th select.col-filter {
+            width: 100%;
+            padding: 3px 5px;
+            font-size: 11px;
+            border: 1px solid #7a9cbf;
+            border-radius: 3px;
+            outline: none;
+            background: #fff;
+            color: #1a3a5c;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        thead tr th select.col-filter:focus {
+            border-color: #4a7aaa;
         }
 
         tbody tr td {
@@ -118,8 +187,8 @@
             white-space: nowrap;
         }
 
-        tbody tr:nth-child(even) { background: #f9fbe7; }
-        tbody tr:hover { background: #e8f5e9; }
+        tbody tr:nth-child(even) { background: #eef4fb; }
+        tbody tr:hover { background: #ddeaf7; }
 
         .no-data {
             text-align: center;
@@ -127,11 +196,22 @@
             color: #999;
             font-size: 13px;
         }
+
+        /* ── MOBILE ── */
+        @media (max-width: 600px) {
+            .header-box img.levista-logo { height: 50px; }
+            .header-box img.sln-logo     { height: 58px; }
+            .search-wrapper              { max-width: 100%; }
+            .search-section              { gap: 8px; }
+            .search-section button       { width: 100%; }
+            table                        { font-size: 11px; }
+            thead tr th, tbody tr td     { padding: 7px 8px; }
+        }
     </style>
 </head>
 <body>
 
-<!-- HEADER BOX -->
+<!-- HEADER -->
 <div class="header-box">
     <img class="levista-logo" src="levista.jpg" alt="Levista">
     <img class="sln-logo" src="logo-sln.webp" alt="SLN">
@@ -139,9 +219,14 @@
 
 <!-- SEARCH -->
 <div class="search-section">
-    <input type="text" id="searchInput"
-           placeholder="Type Outlet ID or Name..."
-           onkeyup="handleKey(event)">
+    <div class="search-wrapper">
+        <input type="text" id="searchInput"
+               placeholder="Type Outlet ID or Name..."
+               autocomplete="off"
+               oninput="showSuggestions()"
+               onkeydown="handleKey(event)">
+        <div id="suggestions"></div>
+    </div>
     <button onclick="triggerSearch()">Search</button>
 </div>
 
@@ -165,8 +250,11 @@
         "GROWTH POINTS 2","GROWTH POINTS 3","TOTAL POINTS"
     ];
 
-    let sheetData = [];
+    const DROPDOWN_COLS = ["ZONE","RSM","ASM","SO"];
+
+    let sheetData      = [];
     let orderedHeaders = [];
+    let columnFilters  = {};
 
     async function loadData() {
         try {
@@ -174,7 +262,7 @@
             sheetData = await res.json();
 
             const sheetKeys = Object.keys(sheetData[0]);
-            const upperMap = {};
+            const upperMap  = {};
             sheetKeys.forEach(k => upperMap[k.trim().toUpperCase()] = k);
 
             orderedHeaders = [];
@@ -185,7 +273,9 @@
                 if (!orderedHeaders.includes(k)) orderedHeaders.push(k);
             });
 
+            orderedHeaders.forEach(h => columnFilters[h] = "");
             buildHeader();
+
             document.getElementById("status").innerText =
                 sheetData.length + " records loaded. Search to view data.";
         } catch (e) {
@@ -195,14 +285,64 @@
     }
 
     function buildHeader() {
-        const tr = document.createElement("tr");
+        const thead = document.getElementById("tableHead");
+        thead.innerHTML = "";
+
+        const headerRow = document.createElement("tr");
+
         orderedHeaders.forEach(h => {
-            const th = document.createElement("th");
-            th.textContent = h.trim().toUpperCase();
-            tr.appendChild(th);
+            const th       = document.createElement("th");
+            const colUpper = h.trim().toUpperCase();
+
+            const label = document.createElement("span");
+            label.className   = "col-label";
+            label.textContent = colUpper;
+            th.appendChild(label);
+
+            if (DROPDOWN_COLS.includes(colUpper)) {
+                const sel = document.createElement("select");
+                sel.className = "col-filter";
+                sel.innerHTML = `<option value="">All</option>`;
+
+                const uniqueVals = [...new Set(sheetData.map(r => r[h] || "").filter(Boolean))].sort();
+                uniqueVals.forEach(v => {
+                    const opt = document.createElement("option");
+                    opt.value       = v;
+                    opt.textContent = v;
+                    sel.appendChild(opt);
+                });
+
+                sel.addEventListener("change", () => {
+                    columnFilters[h] = sel.value.toLowerCase();
+                    applyFilters();
+                });
+                th.appendChild(sel);
+            }
+
+            headerRow.appendChild(th);
         });
-        document.getElementById("tableHead").innerHTML = "";
-        document.getElementById("tableHead").appendChild(tr);
+
+        thead.appendChild(headerRow);
+    }
+
+    function applyFilters() {
+        const query = document.getElementById("searchInput").value.trim().toLowerCase();
+        if (!query) return;
+
+        let base = sheetData.filter(row =>
+            Object.values(row).some(v => String(v).toLowerCase().includes(query))
+        );
+
+        orderedHeaders.forEach(h => {
+            const fv = columnFilters[h];
+            if (fv) {
+                base = base.filter(row => String(row[h] || "").toLowerCase() === fv);
+            }
+        });
+
+        document.getElementById("resultInfo").innerText =
+            "Showing " + base.length + " of " + sheetData.length + " records";
+        displayData(base);
     }
 
     function displayData(data) {
@@ -225,7 +365,57 @@
         });
     }
 
+    function showSuggestions() {
+        const query = document.getElementById("searchInput").value.trim().toLowerCase();
+        const box   = document.getElementById("suggestions");
+
+        if (!query) {
+            box.style.display = "none";
+            document.getElementById("tableWrapper").style.display = "none";
+            document.getElementById("resultInfo").innerText = "";
+            return;
+        }
+
+        const idKey   = orderedHeaders.find(h => h.trim().toUpperCase() === "OUTLET ID");
+        const nameKey = orderedHeaders.find(h => h.trim().toUpperCase() === "OUTLET NAME");
+
+        const seen    = new Set();
+        const matches = [];
+
+        for (const row of sheetData) {
+            [idKey, nameKey].forEach(key => {
+                if (!key) return;
+                const val = String(row[key] || "");
+                if (val.toLowerCase().includes(query) && !seen.has(val)) {
+                    seen.add(val);
+                    matches.push({ val, col: key.trim().toUpperCase() });
+                }
+            });
+            if (matches.length >= 10) break;
+        }
+
+        if (!matches.length) { box.style.display = "none"; return; }
+
+        box.innerHTML = "";
+        matches.forEach(m => {
+            const div    = document.createElement("div");
+            const idx    = m.val.toLowerCase().indexOf(query);
+            const before = m.val.slice(0, idx);
+            const match  = m.val.slice(idx, idx + query.length);
+            const after  = m.val.slice(idx + query.length);
+            div.innerHTML = `${before}<span class="match">${match}</span>${after}`;
+            div.addEventListener("mousedown", () => {
+                document.getElementById("searchInput").value = m.val;
+                box.style.display = "none";
+                triggerSearch();
+            });
+            box.appendChild(div);
+        });
+        box.style.display = "block";
+    }
+
     function triggerSearch() {
+        document.getElementById("suggestions").style.display = "none";
         const query = document.getElementById("searchInput").value.trim().toLowerCase();
 
         if (!query) {
@@ -238,6 +428,9 @@
             Object.values(row).some(v => String(v).toLowerCase().includes(query))
         );
 
+        orderedHeaders.forEach(h => columnFilters[h] = "");
+        document.querySelectorAll("select.col-filter").forEach(s => s.value = "");
+
         document.getElementById("tableWrapper").style.display = "block";
         document.getElementById("resultInfo").innerText =
             "Showing " + filtered.length + " of " + sheetData.length + " records for \"" + query + "\"";
@@ -246,15 +439,18 @@
     }
 
     function handleKey(e) {
-        if (e.key === "Enter") {
-            triggerSearch();
-            return;
-        }
+        if (e.key === "Enter")  { triggerSearch(); return; }
+        if (e.key === "Escape") { document.getElementById("suggestions").style.display = "none"; }
         if (document.getElementById("searchInput").value.trim() === "") {
             document.getElementById("tableWrapper").style.display = "none";
             document.getElementById("resultInfo").innerText = "";
         }
     }
+
+    document.addEventListener("click", e => {
+        if (!document.getElementById("searchInput").contains(e.target))
+            document.getElementById("suggestions").style.display = "none";
+    });
 
     loadData();
 </script>
